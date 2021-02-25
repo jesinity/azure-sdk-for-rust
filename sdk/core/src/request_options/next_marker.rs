@@ -23,6 +23,10 @@ impl NextMarker {
     pub fn as_str(&self) -> &str {
         &self.0
     }
+
+    pub fn append_to_url_query_as_continuation(&self, url: &mut url::Url) {
+        url.query_pairs_mut().append_pair("continuation", &self.0);
+    }
 }
 
 impl AppendToUrlQuery for NextMarker {
