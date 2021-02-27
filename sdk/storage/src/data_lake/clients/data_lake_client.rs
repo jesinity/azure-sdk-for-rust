@@ -1,21 +1,33 @@
-use crate::blob::blob::requests::*;
-use crate::blob::prelude::*;
 use crate::clients::StorageClient;
-use crate::shared_access_signature::SharedAccessSignature;
+use crate::data_lake::{requests::*, responses::*};
 use azure_core::errors::AzureError;
 use azure_core::prelude::*;
-use azure_core::HttpClient;
 use bytes::Bytes;
 use http::method::Method;
 use http::request::{Builder, Request};
 use std::sync::Arc;
 
-pub trait AsDataLakeClient<DS: Into<String>, A: Into<String>> {
-    fn as_data_lake_client(&self, dns_suffix: DS, account: A) -> Arc<DataLakeClient>;
+const DEFAULT_DNS_SUFFIX: &str = "dfs.core.windows.net";
+
+pub trait AsDataLakeClient {
+    fn as_data_lake_client<A: Into<String>>(&self, account: A) -> Arc<DataLakeClient>;
+    fn as_data_lake_client_with_custom_dns_suffix<DS: Into<String>, A: Into<String>>(
+        &self,
+        account: A,
+        dns_suffix: DS,
+    ) -> Arc<DataLakeClient>;
 }
 
-impl<DS: Into<String>, A: Into<String>> AsDataLakeClient<DS, A> for Arc<StorageClient> {
-    fn as_data_lake_client(&self, dns_suffix: DS, account: A) -> Arc<DataLakeClient> {
+impl AsDataLakeClient for Arc<StorageClient> {
+    fn as_data_lake_client<A: Into<String>>(&self, account: A) -> Arc<DataLakeClient> {
+        DataLakeClient::new(self.clone(), account.into(), DEFAULT_DNS_SUFFIX.to_owned())
+    }
+
+    fn as_data_lake_client_with_custom_dns_suffix<DS: Into<String>, A: Into<String>>(
+        &self,
+        account: A,
+        dns_suffix: DS,
+    ) -> Arc<DataLakeClient> {
         DataLakeClient::new(self.clone(), account.into(), dns_suffix.into())
     }
 }
@@ -54,6 +66,10 @@ impl DataLakeClient {
 
     pub(crate) fn data_lake_url(&self) -> Result<url::Url, url::ParseError> {
         url::Url::parse(&format!("https://{}.{}", self.account, self.dns_suffix))
+    }
+
+    pub fn list(&self) -> ListFilesystemsBuilder {
+        ListFilesystemsBuilder::new(self)
     }
 
     pub(crate) fn prepare_request<'a>(

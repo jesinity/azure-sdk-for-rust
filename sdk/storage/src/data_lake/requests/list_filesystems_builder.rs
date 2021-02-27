@@ -53,7 +53,7 @@ impl<'a> ListFilesystemsBuilder<'a> {
             .map(|nm| nm.append_to_url_query_as_continuation(&mut url));
         self.timeout.append_to_url_query(&mut url);
 
-        trace!("list filesystems url = {}", url);
+        println!("list filesystems url = {}", url);
 
         let request = self.data_lake_client.prepare_request(
             url.as_str(),
@@ -65,10 +65,10 @@ impl<'a> ListFilesystemsBuilder<'a> {
             None,
         )?;
 
+        println!("request == {:?}", request);
+
         let response = self
             .data_lake_client
-            .storage_client()
-            .storage_account_client()
             .http_client()
             .execute_request_check_status(request.0, StatusCode::OK)
             .await?;
