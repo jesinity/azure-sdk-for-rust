@@ -1,6 +1,5 @@
 use crate::errors::AzureError;
 use crate::AppendToUrlQuery;
-use std::convert::TryFrom;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct NextMarker(String);

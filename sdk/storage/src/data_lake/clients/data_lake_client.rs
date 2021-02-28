@@ -90,8 +90,8 @@ impl DataLakeClient {
         &self.url
     }
 
-    pub fn list(&self) -> ListFilesystemsBuilder {
-        ListFilesystemsBuilder::new(self)
+    pub fn list(&self) -> ListFileSystemsBuilder {
+        ListFileSystemsBuilder::new(self)
     }
 
     pub(crate) fn prepare_request<'a>(

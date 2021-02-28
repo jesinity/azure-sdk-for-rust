@@ -1,10 +1,7 @@
-#[macro_use]
-extern crate log;
 use azure_core::prelude::*;
 use azure_storage::clients::*;
 use azure_storage::data_lake::clients::*;
 use futures::stream::StreamExt;
-use std::convert::TryInto;
 use std::error::Error;
 use std::num::NonZeroU32;
 use std::sync::Arc;

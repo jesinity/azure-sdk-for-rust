@@ -1,2 +1,2 @@
-mod list_filesystems_response;
-pub use list_filesystems_response::ListFilesystemsResponse;
+mod list_file_systems_response;
+pub use list_file_systems_response::ListFileSystemsResponse;

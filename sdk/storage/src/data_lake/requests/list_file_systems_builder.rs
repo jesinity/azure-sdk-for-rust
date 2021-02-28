@@ -8,7 +8,7 @@ use http::status::StatusCode;
 use std::convert::TryInto;
 
 #[derive(Debug, Clone)]
-pub struct ListFilesystemsBuilder<'a> {
+pub struct ListFileSystemsBuilder<'a> {
     data_lake_client: &'a DataLakeClient,
     prefix: Option<Prefix<'a>>,
     next_marker: Option<NextMarker>,
@@ -17,7 +17,7 @@ pub struct ListFilesystemsBuilder<'a> {
     timeout: Option<Timeout>,
 }
 
-impl<'a> ListFilesystemsBuilder<'a> {
+impl<'a> ListFileSystemsBuilder<'a> {
     pub(crate) fn new(data_lake_client: &'a DataLakeClient) -> Self {
         Self {
             data_lake_client,
@@ -39,7 +39,7 @@ impl<'a> ListFilesystemsBuilder<'a> {
 
     pub async fn execute(
         &self,
-    ) -> Result<ListFilesystemsResponse, Box<dyn std::error::Error + Sync + Send>> {
+    ) -> Result<ListFileSystemsResponse, Box<dyn std::error::Error + Sync + Send>> {
         // we clone this so we can add custom
         // query parameters
         let mut url = self.data_lake_client.url().clone();
@@ -78,7 +78,7 @@ impl<'a> ListFilesystemsBuilder<'a> {
 
     pub fn stream(
         self,
-    ) -> impl Stream<Item = Result<ListFilesystemsResponse, Box<dyn std::error::Error + Sync + Send>>> + 'a
+    ) -> impl Stream<Item = Result<ListFileSystemsResponse, Box<dyn std::error::Error + Sync + Send>>> + 'a
     {
         #[derive(Debug, Clone, PartialEq)]
         enum States {
