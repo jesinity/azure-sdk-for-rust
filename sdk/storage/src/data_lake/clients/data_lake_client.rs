@@ -6,29 +6,35 @@ use bytes::Bytes;
 use http::method::Method;
 use http::request::{Builder, Request};
 use std::sync::Arc;
+use url::Url;
 
 const DEFAULT_DNS_SUFFIX: &str = "dfs.core.windows.net";
 
-pub trait AsDataLakeClient {
-    fn as_data_lake_client<A: Into<String>>(&self, account: A) -> Arc<DataLakeClient>;
-    fn as_data_lake_client_with_custom_dns_suffix<DS: Into<String>, A: Into<String>>(
-        &self,
-        account: A,
-        dns_suffix: DS,
-    ) -> Arc<DataLakeClient>;
+pub trait AsDataLakeClient<A: Into<String>> {
+    fn as_data_lake_client(&self, account: A) -> Result<Arc<DataLakeClient>, url::ParseError>;
 }
 
-impl AsDataLakeClient for Arc<StorageClient> {
-    fn as_data_lake_client<A: Into<String>>(&self, account: A) -> Arc<DataLakeClient> {
-        DataLakeClient::new(self.clone(), account.into(), DEFAULT_DNS_SUFFIX.to_owned())
-    }
-
-    fn as_data_lake_client_with_custom_dns_suffix<DS: Into<String>, A: Into<String>>(
+pub trait AsCustomDataLakeClient<DS: Into<String>, A: Into<String>> {
+    fn as_data_lake_client_with_custom_dns_suffix(
         &self,
         account: A,
         dns_suffix: DS,
-    ) -> Arc<DataLakeClient> {
-        DataLakeClient::new(self.clone(), account.into(), dns_suffix.into())
+    ) -> Result<Arc<DataLakeClient>, url::ParseError>;
+}
+
+impl<A: Into<String>> AsDataLakeClient<A> for Arc<StorageClient> {
+    fn as_data_lake_client(&self, account: A) -> Result<Arc<DataLakeClient>, url::ParseError> {
+        DataLakeClient::new(self.clone(), account.into(), None)
+    }
+}
+
+impl<DS: Into<String>, A: Into<String>> AsCustomDataLakeClient<DS, A> for Arc<StorageClient> {
+    fn as_data_lake_client_with_custom_dns_suffix(
+        &self,
+        account: A,
+        dns_suffix: DS,
+    ) -> Result<Arc<DataLakeClient>, url::ParseError> {
+        DataLakeClient::new(self.clone(), account.into(), Some(dns_suffix.into()))
     }
 }
 
@@ -36,24 +42,40 @@ impl AsDataLakeClient for Arc<StorageClient> {
 pub struct DataLakeClient {
     storage_client: Arc<StorageClient>,
     account: String,
-    dns_suffix: String,
+    custom_dns_suffix: Option<String>,
+    url: Url,
 }
 
 impl DataLakeClient {
     pub(crate) fn new(
         storage_client: Arc<StorageClient>,
         account: String,
-        dns_suffix: String,
-    ) -> Arc<Self> {
-        Arc::new(Self {
+        custom_dns_suffix: Option<String>,
+    ) -> Result<Arc<Self>, url::ParseError> {
+        // we precalculate the url once in the constructor
+        // so we do not have to do it at every request.
+        // This means we have to account for possible
+        // malfolmed urls in the constructor, hence
+        // the Result<_, url::ParseError>
+        let url = url::Url::parse(&format!(
+            "https://{}.{}",
+            account,
+            match custom_dns_suffix.as_ref() {
+                Some(custom_dns_suffix) => custom_dns_suffix,
+                None => DEFAULT_DNS_SUFFIX,
+            }
+        ))?;
+
+        Ok(Arc::new(Self {
             storage_client,
             account,
-            dns_suffix,
-        })
+            custom_dns_suffix,
+            url,
+        }))
     }
 
-    pub fn dns_suffix(&self) -> &str {
-        &self.dns_suffix
+    pub fn custom_dns_suffix(&self) -> Option<&str> {
+        self.custom_dns_suffix.as_deref()
     }
 
     pub(crate) fn http_client(&self) -> &dyn HttpClient {
@@ -64,8 +86,8 @@ impl DataLakeClient {
         &self.storage_client
     }
 
-    pub(crate) fn data_lake_url(&self) -> Result<url::Url, url::ParseError> {
-        url::Url::parse(&format!("https://{}.{}", self.account, self.dns_suffix))
+    pub(crate) fn url(&self) -> &Url {
+        &self.url
     }
 
     pub fn list(&self) -> ListFilesystemsBuilder {
