@@ -26,13 +26,16 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .as_storage_client()
         .as_data_lake_client(account)?;
 
-    let response = data_lake
-        .list()
-        .max_results(NonZeroU32::new(3).unwrap())
-        .execute()
-        .await?;
+    let mut stream = Box::pin(
+        data_lake
+            .list()
+            .max_results(NonZeroU32::new(3).unwrap())
+            .stream(),
+    );
 
-    println!("response == {:?}", response);
+    while let Some(response) = stream.next().await {
+        println!("response == {:?}\n\n", response);
+    }
 
     Ok(())
 }

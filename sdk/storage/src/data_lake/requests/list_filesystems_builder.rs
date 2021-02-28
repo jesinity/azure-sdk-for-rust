@@ -1,5 +1,4 @@
 use crate::data_lake::clients::DataLakeClient;
-use crate::data_lake::requests::*;
 use crate::data_lake::responses::*;
 use azure_core::prelude::*;
 use azure_core::{headers::add_optional_header, AppendToUrlQuery};
@@ -48,14 +47,13 @@ impl<'a> ListFilesystemsBuilder<'a> {
         url.query_pairs_mut().append_pair("resource", "account");
 
         self.prefix.append_to_url_query(&mut url);
-        self.next_marker.append_to_url_query(&mut url);
         self.max_results.append_to_url_query(&mut url);
         self.next_marker
             .as_ref()
             .map(|nm| nm.append_to_url_query_as_continuation(&mut url));
         self.timeout.append_to_url_query(&mut url);
 
-        println!("list filesystems url = {}", url);
+        debug!("list filesystems url = {}", url);
 
         let request = self.data_lake_client.prepare_request(
             url.as_str(),
@@ -67,7 +65,7 @@ impl<'a> ListFilesystemsBuilder<'a> {
             None,
         )?;
 
-        println!("request == {:?}", request);
+        trace!("request == {:?}", request);
 
         let response = self
             .data_lake_client
@@ -78,42 +76,40 @@ impl<'a> ListFilesystemsBuilder<'a> {
         Ok((&response).try_into()?)
     }
 
-    //    pub fn stream(
-    //        self,
-    //    ) -> impl Stream<Item = Result<ListFilesystemsResponse, Box<dyn std::error::Error + Sync + Send>>> + 'a
-    //    {
-    //        #[derive(Debug, Clone, PartialEq)]
-    //        enum States {
-    //            Init,
-    //            NextMarker(NextMarker),
-    //        }
-    //
-    //        unfold(Some(States::Init), move |next_marker: Option<States>| {
-    //            let req = self.clone();
-    //            async move {
-    //                debug!("next_marker == {:?}", &next_marker);
-    //                let response = match next_marker {
-    //                    Some(States::Init) => req.execute().await,
-    //                    Some(States::NextMarker(next_marker)) => {
-    //                        req.next_marker(next_marker).execute().await
-    //                    }
-    //                    None => return None,
-    //                };
-    //
-    //                // the ? operator does not work in async move (yet?)
-    //                // so we have to resort to this boilerplate
-    //                let response = match response {
-    //                    Ok(response) => response,
-    //                    Err(err) => return Some((Err(err), None)),
-    //                };
-    //
-    //                let next_marker = response
-    //                    .next_marker
-    //                    .clone()
-    //                    .map(|next_marker| States::NextMarker(next_marker));
-    //
-    //                Some((Ok(response), next_marker))
-    //            }
-    //        })
-    //    }
+    pub fn stream(
+        self,
+    ) -> impl Stream<Item = Result<ListFilesystemsResponse, Box<dyn std::error::Error + Sync + Send>>> + 'a
+    {
+        #[derive(Debug, Clone, PartialEq)]
+        enum States {
+            Init,
+            NextMarker(NextMarker),
+        }
+
+        unfold(Some(States::Init), move |next_marker: Option<States>| {
+            let req = self.clone();
+            async move {
+                debug!("next_marker == {:?}", &next_marker);
+                let response = match next_marker {
+                    Some(States::Init) => req.execute().await,
+                    Some(States::NextMarker(next_marker)) => {
+                        req.next_marker(next_marker).execute().await
+                    }
+                    None => return None,
+                };
+
+                let response = match response {
+                    Ok(response) => response,
+                    Err(err) => return Some((Err(err), None)),
+                };
+
+                let next_marker = response
+                    .next_marker
+                    .clone()
+                    .map(|next_marker| States::NextMarker(next_marker));
+
+                Some((Ok(response), next_marker))
+            }
+        })
+    }
 }

@@ -1,5 +1,5 @@
 use crate::clients::StorageClient;
-use crate::data_lake::{requests::*, responses::*};
+use crate::data_lake::requests::*;
 use azure_core::errors::AzureError;
 use azure_core::prelude::*;
 use bytes::Bytes;
@@ -56,7 +56,7 @@ impl DataLakeClient {
         // so we do not have to do it at every request.
         // This means we have to account for possible
         // malfolmed urls in the constructor, hence
-        // the Result<_, url::ParseError>
+        // the Result<_, url::ParseError>.
         let url = url::Url::parse(&format!(
             "https://{}.{}",
             account,
