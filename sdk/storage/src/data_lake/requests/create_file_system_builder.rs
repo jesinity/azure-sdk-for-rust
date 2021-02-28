@@ -1,4 +1,4 @@
-use crate::data_lake::clients::DataLakeClient;
+use crate::data_lake::clients::FileSystemClient;
 use crate::data_lake::responses::*;
 use azure_core::prelude::*;
 use azure_core::{headers::add_optional_header, AppendToUrlQuery};
@@ -8,15 +8,15 @@ use std::convert::TryInto;
 
 #[derive(Debug, Clone)]
 pub struct CreateFileSystemBuilder<'a> {
-    data_lake_client: &'a DataLakeClient,
+    file_system_client: &'a FileSystemClient,
     client_request_id: Option<ClientRequestId<'a>>,
     timeout: Option<Timeout>,
 }
 
 impl<'a> CreateFileSystemBuilder<'a> {
-    pub(crate) fn new(data_lake_client: &'a DataLakeClient) -> Self {
+    pub(crate) fn new(file_system_client: &'a FileSystemClient) -> Self {
         Self {
-            data_lake_client,
+            file_system_client,
             client_request_id: None,
             timeout: None,
         }
@@ -29,17 +29,17 @@ impl<'a> CreateFileSystemBuilder<'a> {
 
     pub async fn execute(
         &self,
-    ) -> Result<ListFileSystemsResponse, Box<dyn std::error::Error + Sync + Send>> {
+    ) -> Result<CreateFileSystemResponse, Box<dyn std::error::Error + Sync + Send>> {
         // we clone this so we can add custom
         // query parameters
-        let mut url = self.data_lake_client.url().clone();
+        let mut url = self.file_system_client.url().clone();
 
         url.query_pairs_mut().append_pair("resource", "filesystem");
         self.timeout.append_to_url_query(&mut url);
 
-        debug!("list filesystems url = {}", url);
+        println!("url = {}", url);
 
-        let request = self.data_lake_client.prepare_request(
+        let request = self.file_system_client.prepare_request(
             url.as_str(),
             &Method::PUT,
             &|mut request| {
@@ -52,7 +52,7 @@ impl<'a> CreateFileSystemBuilder<'a> {
         trace!("request == {:?}", request);
 
         let response = self
-            .data_lake_client
+            .file_system_client
             .http_client()
             .execute_request_check_status(request.0, StatusCode::CREATED)
             .await?;

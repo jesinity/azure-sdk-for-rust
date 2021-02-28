@@ -39,6 +39,10 @@ impl FileSystemClient {
         }))
     }
 
+    pub fn create(&self) -> CreateFileSystemBuilder {
+        CreateFileSystemBuilder::new(self)
+    }
+
     pub(crate) fn http_client(&self) -> &dyn HttpClient {
         self.data_lake_client.http_client()
     }

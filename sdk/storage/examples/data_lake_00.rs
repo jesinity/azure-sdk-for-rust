@@ -14,6 +14,10 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let master_key = std::env::var("ADSL_STORAGE_MASTER_KEY")
         .expect("Set env variable ADSL_STORAGE_MASTER_KEY first!");
 
+    let file_system_name = std::env::args()
+        .nth(1)
+        .expect("please specify the file system name as first parameter");
+
     let http_client: Arc<Box<dyn HttpClient>> = Arc::new(Box::new(reqwest::Client::new()));
 
     let storage_account_client =
@@ -22,6 +26,11 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let data_lake = storage_account_client
         .as_storage_client()
         .as_data_lake_client(account)?;
+
+    let file_system = data_lake.as_file_system_client(file_system_name)?;
+
+    let response = file_system.create().execute().await?;
+    println!("repsonse == {:?}", response);
 
     let mut stream = Box::pin(
         data_lake
