@@ -21,8 +21,8 @@ impl TryFrom<&Response<Bytes>> for CreateFileSystemResponse {
     type Error = AzureError;
 
     fn try_from(response: &Response<Bytes>) -> Result<Self, Self::Error> {
-        println!("body == {}", std::str::from_utf8(response.body())?);
-        println!("headers == {:?}", response.headers());
+        trace!("body == {}", std::str::from_utf8(response.body())?);
+        trace!("headers == {:?}", response.headers());
 
         Ok(CreateFileSystemResponse {
             common_storage_response_headers: response.headers().try_into()?,

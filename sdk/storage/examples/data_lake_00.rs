@@ -1,6 +1,6 @@
 use azure_core::prelude::*;
 use azure_storage::clients::*;
-use azure_storage::data_lake::clients::*;
+use azure_storage::data_lake::prelude::*;
 use futures::stream::StreamExt;
 use std::error::Error;
 use std::num::NonZeroU32;
@@ -29,7 +29,18 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let file_system = data_lake.as_file_system_client(file_system_name)?;
 
-    let response = file_system.create().execute().await?;
+    // let's add some metadata. We call them "properties"
+    // to be consistent with the REST API definition
+    // from
+    // [https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/filesystem/create#request-headers](https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/filesystem/create#request-headers)
+    let mut properties = Properties::new();
+    properties.insert("AddedVia", "Azure SDK for Rust");
+    properties.insert("CreatedAt", chrono::Utc::now().to_string());
+    let response = file_system
+        .create()
+        .properties(&properties)
+        .execute()
+        .await?;
     println!("repsonse == {:?}", response);
 
     let mut stream = Box::pin(

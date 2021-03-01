@@ -16,8 +16,8 @@ impl TryFrom<&Response<Bytes>> for ListFileSystemsResponse {
     type Error = AzureError;
 
     fn try_from(response: &Response<Bytes>) -> Result<Self, Self::Error> {
-        debug!("{}", std::str::from_utf8(response.body())?);
-        debug!("{:?}", response.headers());
+        trace!("{}", std::str::from_utf8(response.body())?);
+        trace!("{:?}", response.headers());
 
         let file_system_list: FileSystemList = response.try_into()?;
 
