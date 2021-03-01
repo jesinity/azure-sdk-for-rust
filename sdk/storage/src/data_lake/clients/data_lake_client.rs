@@ -82,10 +82,6 @@ impl DataLakeClient {
         self.storage_client.storage_account_client().http_client()
     }
 
-    pub(crate) fn storage_client(&self) -> &StorageClient {
-        &self.storage_client
-    }
-
     pub(crate) fn url(&self) -> &Url {
         &self.url
     }
