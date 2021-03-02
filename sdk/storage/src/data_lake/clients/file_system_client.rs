@@ -43,6 +43,10 @@ impl FileSystemClient {
         CreateFileSystemBuilder::new(self)
     }
 
+    pub fn delete(&self) -> DeleteFileSystemBuilder {
+        DeleteFileSystemBuilder::new(self)
+    }
+
     pub(crate) fn http_client(&self) -> &dyn HttpClient {
         self.data_lake_client.http_client()
     }
