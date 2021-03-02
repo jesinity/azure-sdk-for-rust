@@ -53,7 +53,7 @@ impl<'a> DeleteFileSystemBuilder<'a> {
             None,
         )?;
 
-        println!("request == {:?}", request);
+        debug!("request == {:?}", request);
 
         let response = self
             .file_system_client

@@ -4,3 +4,5 @@ mod create_file_system_builder;
 pub use create_file_system_builder::CreateFileSystemBuilder;
 mod delete_file_system_builder;
 pub use delete_file_system_builder::DeleteFileSystemBuilder;
+mod get_file_system_properties_builder;
+pub use get_file_system_properties_builder::GetFileSystemPropertiesBuilder;

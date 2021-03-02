@@ -54,6 +54,9 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         println!("response == {:?}\n\n", response);
     }
 
+    let response = file_system.get_properties().execute().await?;
+    println!("response == {:?}\n\n", response);
+
     let response = file_system.delete().execute().await?;
     println!("response == {:?}\n\n", response);
 
