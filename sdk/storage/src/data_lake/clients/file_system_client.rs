@@ -1,5 +1,5 @@
-use crate::data_lake::clients::DataLakeClient;
 use crate::data_lake::requests::*;
+use crate::{data_lake::clients::DataLakeClient, Properties};
 use azure_core::errors::AzureError;
 use azure_core::prelude::*;
 use bytes::Bytes;
@@ -49,6 +49,13 @@ impl FileSystemClient {
 
     pub fn get_properties(&self) -> GetFileSystemPropertiesBuilder {
         GetFileSystemPropertiesBuilder::new(self)
+    }
+
+    pub fn set_properties<'a>(
+        &'a self,
+        properties: Option<&'a Properties<'a, 'a>>,
+    ) -> SetFileSystemPropertiesBuilder {
+        SetFileSystemPropertiesBuilder::new(self, properties)
     }
 
     pub(crate) fn http_client(&self) -> &dyn HttpClient {

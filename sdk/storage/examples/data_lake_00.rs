@@ -54,6 +54,13 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         println!("response == {:?}\n\n", response);
     }
 
+    properties.insert("ModifiedBy", "Iota");
+    let response = file_system
+        .set_properties(Some(&properties))
+        .execute()
+        .await?;
+    println!("response == {:?}\n\n", response);
+
     let response = file_system.get_properties().execute().await?;
     println!("response == {:?}\n\n", response);
 
